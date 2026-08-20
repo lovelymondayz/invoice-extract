@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Invoice Extract Dashboard</title>
+<script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#0f172a;color:#e2e8f0}
+.container{max-width:1400px;margin:0 auto;padding:20px}
+.header{display:flex;justify-content:space-between;align-items:center;margin-bottom:30px;padding-bottom:20px;border-bottom:1px solid #1e293b}
+.header h1{font-size:24px;color:#f8fafc}
+.section{background:#1e293b;border-radius:12px;padding:24px;margin-bottom:20px}
+.section h2{font-size:18px;margin-bottom:16px;color:#f1f5f9}
+.btn{padding:10px 20px;border:none;border-radius:6px;font-size:14px;font-weight:500;cursor:pointer}
+.btn-primary{background:#3b82f6;color:white}
+.btn-secondary{background:#334155;color:#e2e8f0}
+table{width:100%;border-collapse:collapse}
+th,td{padding:12px;text-align:left;border-bottom:1px solid #334155;font-size:14px}
+th{color:#94a3b8;font-weight:500;font-size:12px;text-transform:uppercase}
+tr:hover{background:#0f172a}
+.empty{text-align:center;padding:60px;color:#64748b}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const {useState,useEffect,useCallback}=React;
+const API=window.location.origin.replace(':8101',':8100');
+function App(){
+  const[invoices,setInvoices]=useState([]);
+  const[file,setFile]=useState(null);
+  const load=useCallback(async()=>{
+    try{const r=await fetch(`${API}/invoices`);const d=await r.json();setInvoices(d.invoices||[])}catch(e){}
+  },[]);
+  useEffect(()=>{load();const i=setInterval(load,5000);return()=>clearInterval(i)},[load]);
+  const upload=async()=>{
+    if(!file)return;
+    const fd=new FormData();fd.append("file",file);
+    await fetch(`${API}/extract`,{method:"POST",body:fd});
+    setFile(null);setTimeout(load,1000);
+  };
+  return(
+    <div className="container">
+      <div className="header"><h1>🧾 Invoice Extract</h1></div>
+      <div className="section">
+        <h2>Upload Invoice</h2>
+        <input type="file" accept="image/*,.pdf" onChange={e=>setFile(e.target.files[0])}/>
+        <button className="btn btn-primary" onClick={upload} style={{marginLeft:"12px"}}>Upload</button>
+      </div>
+      <div className="section">
+        <h2>Invoices ({invoices.length})</h2>
+        {invoices.length===0?<div className="empty">No invoices yet</div>:
+        <table>
+          <thead><tr><th>Filename</th><th>Vendor</th><th>Number</th><th>Total</th><th>Date</th></tr></thead>
+          <tbody>
+            {invoices.map(inv=>(
+              <tr key={inv.id}><td>{inv.filename}</td><td>{inv.vendor_name}</td><td>{inv.invoice_number}</td><td>{inv.total}</td><td>{new Date(inv.created_at).toLocaleDateString()}</td></tr>
+            ))}
+          </tbody>
+        </table>}
+        {invoices.length>0&&<button className="btn btn-secondary" onClick={()=>window.open(`${API}/export`)}>Export CSV</button>}
+      </div>
+    </div>
+  );
+}
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>

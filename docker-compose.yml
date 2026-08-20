@@ -1,0 +1,29 @@
+version: "3.8"
+
+services:
+  invoice-extract-api:
+    build: .
+    container_name: invoice-extract-api
+    ports:
+      - "8100:8000"
+    env_file:
+      - .env
+    volumes:
+      - ./data:/app/data
+      - ./uploads:/app/uploads
+      - ./output:/app/output
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  invoice-extract-dashboard:
+    image: nginx:alpine
+    container_name: invoice-extract-dashboard
+    ports:
+      - "8101:80"
+    volumes:
+      - ./src/dashboard/public:/usr/share/nginx/html
+    restart: unless-stopped
