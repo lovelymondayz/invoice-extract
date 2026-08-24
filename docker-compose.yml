@@ -5,12 +5,11 @@ services:
     build: .
     container_name: invoice-extract-api
     ports:
-      - "8100:8000"
+      - "8105:8000"
     env_file:
       - .env
     volumes:
       - ./data:/app/data
-      - ./uploads:/app/uploads
       - ./output:/app/output
     restart: unless-stopped
     healthcheck:
@@ -23,7 +22,7 @@ services:
     image: nginx:alpine
     container_name: invoice-extract-dashboard
     ports:
-      - "8101:80"
+      - "8106:80"
     volumes:
       - ./src/dashboard/public:/usr/share/nginx/html
     restart: unless-stopped
