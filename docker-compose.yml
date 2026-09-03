@@ -2,7 +2,9 @@ version: "3.8"
 
 services:
   invoice-extract-api:
-    build: .
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
     container_name: invoice-extract-api
     ports:
       - "8105:8000"
